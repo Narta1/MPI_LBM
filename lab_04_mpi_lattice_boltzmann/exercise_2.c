@@ -46,4 +46,44 @@ void lbm_comm_ghost_exchange_ex2(lbm_comm_t * comm, lbm_mesh_t * mesh)
 	//example to access cell
 	//double * cell = lbm_mesh_get_cell(mesh, local_x, local_y);
 	//double * cell = lbm_mesh_get_cell(mesh, comm->width - 1, 0);
+
+	int rank=MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	int comm_size=MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+
+	int count = comm->height * DIRECTIONS;
+
+	double * real_cell_first=lbm_mesh_get_cell(mesh,1,0);
+	double * real_cell_last=lbm_mesh_get_cell(mesh,comm_size-2,0);
+
+	double * ghost_cell_left=lbm_mesh_get_cell(mesh,0,0);
+	double * ghost_cell_right=lbm_mesh_get_cell(mesh,comm_size-1,0);
+
+	//communication to the left :
+	if (rank>0) {
+		if(rank%2!=0){
+			MPI_Send(real_cell_first,count,MPI_DOUBLE,rank-1,0,comm->communicator);
+			MPI_Recv(ghost_cell_left,count,MPI_DOUBLE,rank-1,0,comm->communicator,MPI_STATUS_IGNORE);
+		} 
+		else{
+			MPI_Recv(ghost_cell_left,count,MPI_DOUBLE,rank-1,0,comm->communicator,MPI_STATUS_IGNORE);
+			MPI_Send(real_cell_first,count,MPI_DOUBLE,rank-1,0,comm->communicator);
+		}
+	}
+	//communication to the right : 
+	if(rank<comm_size-1){
+		if(rank%2!=0){
+			MPI_Send(real_cell_last,count,MPI_DOUBLE,rank+1,0,comm->communicator);
+			MPI_Recv(ghost_cell_right,count,MPI_DOUBLE,rank+1,0,comm->communicator,MPI_STATUS_IGNORE);
+		} 
+		else{
+			MPI_Recv(ghost_cell_right,count,MPI_DOUBLE,rank+1,0,comm->communicator,MPI_STATUS_IGNORE);
+			MPI_Send(real_cell_last,count,MPI_DOUBLE,rank+1,0,comm->communicator);
+		}
+	}
+
+	
+	
+	
+
+	
 }
