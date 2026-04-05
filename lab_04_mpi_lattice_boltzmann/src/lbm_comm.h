@@ -66,6 +66,7 @@ typedef struct lbm_comm_t_s
 	//////////////////// EXTRA PARAMETERS ALREADY HANDLED /////////////////////////
 	/** Keep track of the file handler to save data (DO NOT MODIFY FOR THE LAB) **/
 	MPI_File file_handler;
+	int req_count;
 } lbm_comm_t;
 
 /****************************************************/

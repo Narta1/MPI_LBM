@@ -25,16 +25,12 @@
 /****************************************************/
 void lbm_comm_init_ex1(lbm_comm_t * comm, int total_width, int total_height)
 {
-	//
-	// TODO: calculate the splitting parameters for the current task.
-	//
-	// HINT: You can look in exercise_0.c to get an example for the sequential case.
-	//
+	
 	int rank, comm_size;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
 
-
+	comm->communicator = MPI_COMM_WORLD;
 	// vertical split.
 	comm->nb_x = comm_size;
 	comm->nb_y = 1;
@@ -62,29 +58,18 @@ void lbm_comm_init_ex1(lbm_comm_t * comm, int total_width, int total_height)
 /****************************************************/
 void lbm_comm_ghost_exchange_ex1(lbm_comm_t * comm, lbm_mesh_t * mesh)
 {
-	//
-	// TODO: Implement the 1D communication with blocking MPI functions (MPI_Send & MPI_Recv)
-	//
-	// To be used:
-	//    - DIRECTIONS: the number of doubles composing a cell
-	//    - double[DIRECTIONS] lbm_mesh_get_cell(mesh, x, y): function to get the address of a particular cell.
-	//    - comm->width : The with of the local sub-domain (containing the ghost cells)
-	//    - comm->height : The height of the local sub-domain (containing the ghost cells)
 	
-	//example to access cell
-	//double * cell = lbm_mesh_get_cell(mesh, local_x, local_y);
-	//double * cell = lbm_mesh_get_cell(mesh, comm->width - 1, 0);
 
-	int rank=MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	int comm_size=MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
-
+	int rank, comm_size;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
 	int count = comm->height * DIRECTIONS;
 
 	double * real_cell_first=lbm_mesh_get_cell(mesh,1,0);
-	double * real_cell_last=lbm_mesh_get_cell(mesh,comm_size-2,0);
+	double * real_cell_last=lbm_mesh_get_cell(mesh,comm->width-2,0);
 
 	double * ghost_cell_left=lbm_mesh_get_cell(mesh,0,0);
-	double * ghost_cell_right=lbm_mesh_get_cell(mesh,comm_size-1,0);
+	double * ghost_cell_right=lbm_mesh_get_cell(mesh,comm->width-1,0);
 
 	//communication in increasing order of ranks to the right :
 	if(rank>0){
@@ -100,7 +85,7 @@ void lbm_comm_ghost_exchange_ex1(lbm_comm_t * comm, lbm_mesh_t * mesh)
 	if(rank<comm_size-1){
 		MPI_Recv(ghost_cell_right,count,MPI_DOUBLE,rank+1,1,comm->communicator,MPI_STATUS_IGNORE);
 	} 
-	if(rank< comm_size-1){
+	if(rank>0){
 		MPI_Send(real_cell_first,count,MPI_DOUBLE,rank-1,1,comm->communicator);
 	}
 

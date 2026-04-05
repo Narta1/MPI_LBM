@@ -47,6 +47,7 @@ void lbm_comm_release_ex3( lbm_comm_t * comm );
 void lbm_comm_ghost_exchange_ex3(lbm_comm_t * comm, lbm_mesh_t * mesh );
 void lbm_save_ex3(lbm_file_mesh_t * save_buffer, lbm_comm_t * comm, lbm_mesh_t * mesh_to_save, lbm_mesh_type_t * mesh_type, int write_step);
 void lbm_do_step_ex3(lbm_comm_t * comm, lbm_mesh_type_t * mesh_type, lbm_mesh_t * mesh, lbm_mesh_t * temp_mesh );
+void lbm_comm_ghost_exchange_ex3_wait(lbm_comm_t * comm);
 
 /****************************************************/
 //2D

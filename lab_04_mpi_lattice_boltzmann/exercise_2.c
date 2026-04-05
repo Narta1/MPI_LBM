@@ -33,30 +33,21 @@ void lbm_comm_init_ex2(lbm_comm_t * comm, int total_width, int total_height)
 /****************************************************/
 void lbm_comm_ghost_exchange_ex2(lbm_comm_t * comm, lbm_mesh_t * mesh)
 {
-	//
-	// TODO: Implement the 1D communication with blocking MPI functions using
-	//       odd/even communications.
-	//
-	// To be used:
-	//    - DIRECTIONS: the number of doubles composing a cell
-	//    - double[9] lbm_mesh_get_cell(mesh, x, y): function to get the address of a particular cell.
-	//    - comm->width : The with of the local sub-domain (containing the ghost cells)
-	//    - comm->height : The height of the local sub-domain (containing the ghost cells)
 	
-	//example to access cell
-	//double * cell = lbm_mesh_get_cell(mesh, local_x, local_y);
-	//double * cell = lbm_mesh_get_cell(mesh, comm->width - 1, 0);
 
-	int rank=MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	int comm_size=MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+	int rank, comm_size;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+	double * real_cell_last  = lbm_mesh_get_cell(mesh, comm->width - 2, 0);
+	double * ghost_cell_right = lbm_mesh_get_cell(mesh, comm->width - 1, 0);
 
 	int count = comm->height * DIRECTIONS;
 
 	double * real_cell_first=lbm_mesh_get_cell(mesh,1,0);
-	double * real_cell_last=lbm_mesh_get_cell(mesh,comm_size-2,0);
+	
 
 	double * ghost_cell_left=lbm_mesh_get_cell(mesh,0,0);
-	double * ghost_cell_right=lbm_mesh_get_cell(mesh,comm_size-1,0);
+	
 
 	//communication to the left :
 	if (rank>0) {

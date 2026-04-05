@@ -179,7 +179,7 @@ void lbm_do_step_ex_select(lbm_comm_t * comm, lbm_mesh_type_t * mesh_type, lbm_m
 			lbm_do_step_ex0(comm, mesh_type, mesh, temp_mesh );
 			break;
 		case 3:
-			lbm_do_step_ex0(comm, mesh_type, mesh, temp_mesh );
+			lbm_do_step_ex3(comm, mesh_type, mesh, temp_mesh );
 			break;
 		case 4:
 			lbm_do_step_ex0(comm, mesh_type, mesh, temp_mesh );
