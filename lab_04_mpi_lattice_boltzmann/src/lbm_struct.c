@@ -98,8 +98,8 @@ void fatal(const char * message)
 		fprintf(stderr,"\033[31mFATAL ERROR : %s\033[39m\n",message);
 	#endif
 	MPI_Abort(MPI_COMM_WORLD, -1);
-	//MPI_Finalize();
-	//exit(1);
+	MPI_Finalize();
+	exit(1);
 }
 
 /****************************************************/
@@ -114,6 +114,6 @@ void warning(const char * message)
 	#else
 		fprintf(stderr,"\033[33mWarning : %s\033[39m\n",message);
 	#endif
-	//MPI_Finalize();
-	//exit(1);
+	MPI_Finalize();
+	exit(1);
 }

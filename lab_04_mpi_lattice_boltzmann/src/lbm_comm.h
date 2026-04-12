@@ -83,5 +83,7 @@ static inline int lbm_comm_height( lbm_comm_t *comm )
 
 /****************************************************/
 void  lbm_comm_print( lbm_comm_t * comm );
+void manual_copy_to_buffer_x_axis(int height, double * buf, lbm_comm_t * comm, lbm_mesh_t * mesh);
+void manual_copy_buffer_to_mesh_x_axis(int height, double *buf, lbm_comm_t *comm, lbm_mesh_t *mesh);
 
 #endif

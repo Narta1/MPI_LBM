@@ -51,3 +51,23 @@ void  lbm_comm_print( lbm_comm_t *comm )
 		comm->width,
 		comm->height);
 }
+
+void manual_copy_to_buffer_x_axis(int height, double * buf, lbm_comm_t * comm, lbm_mesh_t * mesh) {
+	for (int x = 0; x < comm->width; x++) {
+		double *cell = lbm_mesh_get_cell(mesh, x, height);
+
+		for (int d = 0; d < DIRECTIONS; d++) {
+			buf[x * DIRECTIONS + d] = cell[d];
+		}
+	}
+}
+
+void manual_copy_buffer_to_mesh_x_axis(int height, double *buf, lbm_comm_t *comm, lbm_mesh_t *mesh) {
+    for (int x = 0; x < comm->width; x++) {
+        double *cell = lbm_mesh_get_cell(mesh, x, height);
+
+        for (int d = 0; d < DIRECTIONS; d++) {
+            cell[d] = buf[x * DIRECTIONS + d];
+        }
+    }
+}

@@ -13,7 +13,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "lbm_config.h"
-
 /****************************************************/
 /**
  * A cell is an array of DIRECTIONS doubles to store the microscopic
@@ -116,7 +115,6 @@ void lbm_mesh_type_t_release( lbm_mesh_type_t * mesh );
 /****************************************************/
 void fatal(const char * message);
 void warning(const char * message);
-
 /****************************************************/
 /**
  * Function used to get the address of a given cell in the local mesh.
