@@ -135,12 +135,12 @@ void lbm_comm_ghost_exchange_ex4(lbm_comm_t * comm, lbm_mesh_t * mesh)
 		manual_copy_buffer_to_mesh_x_axis(comm->height - 1, comm->buffer_recv_down, comm, mesh);
 	
 
-	//right diagonals
+	//right diagonals //TODO: REDUNDANT SEND AND RECEIVE ?
 	MPI_Sendrecv(lbm_mesh_get_cell(mesh, comm->width - 2, 1), DIRECTIONS, MPI_DOUBLE, rank_up_right, TAG, lbm_mesh_get_cell(mesh, comm->width - 1, 0), DIRECTIONS, MPI_DOUBLE, rank_up_right, TAG, comm->communicator, MPI_STATUS_IGNORE);
 	MPI_Sendrecv(lbm_mesh_get_cell(mesh, comm->width - 2, comm->height - 2), DIRECTIONS, MPI_DOUBLE, rank_right_down, TAG, lbm_mesh_get_cell(mesh,comm->width-1,comm->height-1), DIRECTIONS, MPI_DOUBLE, rank_right_down, TAG, comm->communicator, MPI_STATUS_IGNORE);
 
 
-	//left diagonals
+	//left diagonals //TODO: REDUNDANT SEND AND RECEIVE ?
 	MPI_Sendrecv(lbm_mesh_get_cell(mesh,1,1), DIRECTIONS, MPI_DOUBLE, rank_left_up, TAG, lbm_mesh_get_cell(mesh,0,0), DIRECTIONS, MPI_DOUBLE, rank_left_up, TAG, comm->communicator, MPI_STATUS_IGNORE);
 	MPI_Sendrecv(lbm_mesh_get_cell(mesh, 1, comm->height - 2), DIRECTIONS, MPI_DOUBLE, rank_down_left, TAG, lbm_mesh_get_cell(mesh, 0, comm->height - 1), DIRECTIONS, MPI_DOUBLE, rank_down_left, TAG, comm->communicator, MPI_STATUS_IGNORE);
 
