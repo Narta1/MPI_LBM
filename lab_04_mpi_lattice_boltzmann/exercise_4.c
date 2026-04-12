@@ -25,8 +25,6 @@
 #include "src/exercises.h"
 #include <assert.h>
 
-#define TAG 0xFFFF
-
 /****************************************************/
 void lbm_comm_init_ex4(lbm_comm_t * comm, int total_width, int total_height)
 {
@@ -53,7 +51,6 @@ void lbm_comm_init_ex4(lbm_comm_t * comm, int total_width, int total_height)
 	comm->communicator = cart_comm;
 
 	comm->nb_x = dims[0]; 
-	assert(total_width % comm->nb_x == 0);
 	if(total_width % comm->nb_x != 0) warning("number of processes on the X-axis doesn't divide the total width");
 	comm->nb_y = dims[1]; 
 	if(total_width % comm->nb_y != 0) warning("number of processes on the Y-axis doesn't divide the total width");
@@ -96,13 +93,6 @@ void lbm_comm_release_ex4(lbm_comm_t * comm)
 	free(comm->buffer_send_up);
 }
 
-int MPI_Cart_rank_wrapper(lbm_comm_t * comm, int x, int y) {
-	int coords[] = {x, y};
-	int rank;
-	MPI_Cart_rank(comm->communicator, coords, &rank);
-	return rank;
-}
-
 /****************************************************/
 void lbm_comm_ghost_exchange_ex4(lbm_comm_t * comm, lbm_mesh_t * mesh)
 {
@@ -124,19 +114,12 @@ void lbm_comm_ghost_exchange_ex4(lbm_comm_t * comm, lbm_mesh_t * mesh)
 	int rank_left_up = comm->rank_x == 0 || comm->rank_y == 0 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x - 1, comm->rank_y - 1);
 
 	int count_data_vertically = comm->height * DIRECTIONS;
-	
-	double * real_cell_left_up = lbm_mesh_get_cell(mesh,1,0);
-	double * real_cell_right_up = lbm_mesh_get_cell(mesh,comm->width-2, 0);
-
-	double * ghost_cell_left_up = lbm_mesh_get_cell(mesh,0,0);
-	double * ghost_cell_right_up = lbm_mesh_get_cell(mesh,comm->width-1,0);
-
 
 	//right 
-	MPI_Sendrecv(real_cell_right_up, count_data_vertically, MPI_DOUBLE, rank_right, TAG, ghost_cell_left_up, count_data_vertically, MPI_DOUBLE, rank_left, TAG, comm->communicator, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(lbm_mesh_get_cell(mesh,comm->width-2, 0), count_data_vertically, MPI_DOUBLE, rank_right, TAG, lbm_mesh_get_cell(mesh,0,0), count_data_vertically, MPI_DOUBLE, rank_left, TAG, comm->communicator, MPI_STATUS_IGNORE);
 	
 	//left 
-	MPI_Sendrecv(real_cell_left_up, count_data_vertically, MPI_DOUBLE, rank_left, TAG, ghost_cell_right_up, count_data_vertically, MPI_DOUBLE, rank_right, TAG, comm->communicator, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(lbm_mesh_get_cell(mesh,1,0), count_data_vertically, MPI_DOUBLE, rank_left, TAG, lbm_mesh_get_cell(mesh,comm->width-1,0), count_data_vertically, MPI_DOUBLE, rank_right, TAG, comm->communicator, MPI_STATUS_IGNORE);
 	
 	manual_copy_to_buffer_x_axis(1, comm->buffer_send_up, comm, mesh);
 	manual_copy_to_buffer_x_axis(comm->height - 2, comm->buffer_send_down, comm, mesh);

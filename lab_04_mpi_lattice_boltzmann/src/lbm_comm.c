@@ -71,3 +71,10 @@ void manual_copy_buffer_to_mesh_x_axis(int height, double *buf, lbm_comm_t *comm
         }
     }
 }
+
+int MPI_Cart_rank_wrapper(lbm_comm_t * comm, int x, int y) {
+	int coords[] = {x, y};
+	int rank;
+	MPI_Cart_rank(comm->communicator, coords, &rank);
+	return rank;
+}

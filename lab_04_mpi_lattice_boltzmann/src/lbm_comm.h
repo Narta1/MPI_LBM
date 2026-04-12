@@ -19,6 +19,8 @@
 #define RANK_MASTER 0
 /** Maximum number of parallel async operations to track. **/
 #define MAX_ASYNC 16
+#define TAG 0xFFFF
+
 
 /****************************************************/
 /**
@@ -85,5 +87,5 @@ static inline int lbm_comm_height( lbm_comm_t *comm )
 void  lbm_comm_print( lbm_comm_t * comm );
 void manual_copy_to_buffer_x_axis(int height, double * buf, lbm_comm_t * comm, lbm_mesh_t * mesh);
 void manual_copy_buffer_to_mesh_x_axis(int height, double *buf, lbm_comm_t *comm, lbm_mesh_t *mesh);
-
+int MPI_Cart_rank_wrapper(lbm_comm_t * comm, int x, int y);
 #endif
