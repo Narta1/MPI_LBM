@@ -50,19 +50,11 @@ void lbm_comm_ghost_exchange_ex5(lbm_comm_t * comm, lbm_mesh_t * mesh)
 	//annoying fucking boundary calculations 
 	int rank_up = comm->rank_y == 0 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x, comm->rank_y - 1);
 
-	int rank_up_right = comm->rank_y == 0 || comm->rank_x == comm->nb_x - 1 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x + 1, comm->rank_y - 1);
-
 	int rank_right = comm->rank_x == comm->nb_x - 1 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x + 1, comm->rank_y);
-
-	int rank_right_down = comm->rank_y == comm->nb_y - 1 || comm->rank_x == comm->nb_x - 1 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x + 1, comm->rank_y + 1); 
 
 	int rank_down = comm->rank_y == comm->nb_y - 1 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x, comm->rank_y + 1);
 
-	int rank_down_left = comm->rank_y == comm->nb_y - 1 || comm->rank_x == 0 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x - 1, comm->rank_y + 1);
-
 	int rank_left = comm->rank_x == 0 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x - 1, comm->rank_y);
-
-	int rank_left_up = comm->rank_x == 0 || comm->rank_y == 0 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x - 1, comm->rank_y - 1);
 
 	int count_data_vertically = comm->height * DIRECTIONS;
 	
@@ -75,12 +67,7 @@ void lbm_comm_ghost_exchange_ex5(lbm_comm_t * comm, lbm_mesh_t * mesh)
 	//up and down
 	MPI_Sendrecv(lbm_mesh_get_cell(mesh, 0, 1), 1, comm->type, rank_up, TAG, lbm_mesh_get_cell(mesh, 0, comm->height - 1), 1, comm->type, rank_down, TAG, comm->communicator, MPI_STATUS_IGNORE);
 	MPI_Sendrecv(lbm_mesh_get_cell(mesh, 0, comm->height - 2), 1, comm->type, rank_down, TAG, lbm_mesh_get_cell(mesh, 0, 0), 1, comm->type, rank_up, TAG, comm->communicator, MPI_STATUS_IGNORE);	
-
-	//right diagonals //TODO: REDUNDANT SEND AND RECEIVE ?
-	MPI_Sendrecv(lbm_mesh_get_cell(mesh, comm->width - 2, 1), DIRECTIONS, MPI_DOUBLE, rank_up_right, TAG, lbm_mesh_get_cell(mesh, comm->width - 1, 0), DIRECTIONS, MPI_DOUBLE, rank_up_right, TAG, comm->communicator, MPI_STATUS_IGNORE);
-	MPI_Sendrecv(lbm_mesh_get_cell(mesh, comm->width - 2, comm->height - 2), DIRECTIONS, MPI_DOUBLE, rank_right_down, TAG, lbm_mesh_get_cell(mesh,comm->width-1,comm->height-1), DIRECTIONS, MPI_DOUBLE, rank_right_down, TAG, comm->communicator, MPI_STATUS_IGNORE);
-
-	//left diagonals //TODO: REDUNDANT SEND AND RECEIVE ?
-	MPI_Sendrecv(lbm_mesh_get_cell(mesh,1,1), DIRECTIONS, MPI_DOUBLE, rank_left_up, TAG, lbm_mesh_get_cell(mesh,0,0), DIRECTIONS, MPI_DOUBLE, rank_left_up, TAG, comm->communicator, MPI_STATUS_IGNORE);
-	MPI_Sendrecv(lbm_mesh_get_cell(mesh, 1, comm->height - 2), DIRECTIONS, MPI_DOUBLE, rank_down_left, TAG, lbm_mesh_get_cell(mesh, 0, comm->height - 1), DIRECTIONS, MPI_DOUBLE, rank_down_left, TAG, comm->communicator, MPI_STATUS_IGNORE);
 }
+
+
+//TODO: Send output to the 0th rank.
