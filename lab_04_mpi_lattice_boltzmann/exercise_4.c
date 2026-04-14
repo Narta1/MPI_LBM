@@ -51,9 +51,9 @@ void lbm_comm_init_ex4(lbm_comm_t * comm, int total_width, int total_height)
 	comm->communicator = cart_comm;
 
 	comm->nb_x = dims[0]; 
-	if(total_width % comm->nb_x != 0) warning("number of processes on the X-axis doesn't divide the total width");
+	if(total_width % comm->nb_x != 0 && cart_rank == 0) warning("number of processes on the X-axis doesn't divide the total width");
 	comm->nb_y = dims[1]; 
-	if(total_width % comm->nb_y != 0) warning("number of processes on the Y-axis doesn't divide the total width");
+	if(total_width % comm->nb_y != 0 && cart_rank == 0) warning("number of processes on the Y-axis doesn't divide the total width");
 
 	comm->rank_x = coords[0];
 	comm->rank_y = coords[1];
