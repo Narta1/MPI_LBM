@@ -41,7 +41,7 @@ void lbm_comm_init_ex4(lbm_comm_t * comm, int total_width, int total_height)
     MPI_Comm cart_comm = NULL;
 
     MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, reorder, &cart_comm);
-	if(cart_comm == NULL) fatal("Error whilst creating the cartesian communication");
+	if(cart_comm == NULL && rank == 0) fatal("Error whilst creating the cartesian communication");
 
     int coords[2];
     int cart_rank;
