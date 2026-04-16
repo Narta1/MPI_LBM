@@ -19,18 +19,18 @@
 //
 //////////////////////////////////////////////////////
 
-/****************************************************/
+
 #include "src/lbm_struct.h"
 #include "src/exercises.h"
 
-/****************************************************/
+
 void lbm_comm_init_ex2(lbm_comm_t * comm, int total_width, int total_height)
 {
 	//we use the same implementation then ex1
 	lbm_comm_init_ex1(comm, total_width, total_height);
 }
 
-/****************************************************/
+
 void lbm_comm_ghost_exchange_ex2(lbm_comm_t * comm, lbm_mesh_t * mesh)
 {
 	
