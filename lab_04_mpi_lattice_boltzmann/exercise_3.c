@@ -40,7 +40,7 @@ void lbm_do_step_ex3(lbm_comm_t * comm, lbm_mesh_type_t * mesh_type, lbm_mesh_t 
     
     lbm_comm_ghost_exchange_ex3(comm, temp_mesh);  
 
-    
+    //overlapping computation on the inner cell(non depending on ghost cells)
     lbm_phys_propagation_inner(mesh, temp_mesh);
 
     
