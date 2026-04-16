@@ -1,0 +1,181 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+
+\lstset{
+  language=C,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+  identifierstyle=\color{black},
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=5pt,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2
+}
+
+\title{Lab 2 - Parallel algorithms and programming}
+\author{ZLATEVSKI Andrej - NEZIRAJ Narta}
+\date{April 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Introduction
+In this report, we explore how to parallelize a fluid simulation using the Lattice Boltzmann Method (LBM) with MPI. The goal is to split the simulation domain across multiple processes and make them communicate efficiently, thus enabling faster computation. Of course, there are limitations, mostly because of the communication overhead between processes and also because of hardware constraints. \n 
+
+\vspace{5mm}
+\textbf{Note:} The CPU used to run the experiments is a quad core Intel Core i5-10300H 2.50 GHz with 2 threads per core. By running \verb|likwid-topology|, we know there is 1 NUMA domain, with sizes of L1/L2/L3 caches being respectively 32kB, 256kB, 8MB.
+
+
+\section{Assignement 1D splitting }
+
+The idea of parallelizing the LBM simulation is to split the global domain along the X axis and give each slice to one MPI process. Each process only computes its own part, but needs to exchange boundary values with its neighbors at each time step. We implemented three versions of this communication: a basic blocking version, an odd/even version to avoid processes waiting on each other, and a non blocking version that tries to overlap communication with computation.
+
+
+\subsection{1D blocking communication}
+
+The core idea of this implementation is to split the domain evenly along the X axis and assign each slice to one MPI process. In lbm\_comm\_init\_ex1(), each process computes its local width as total\_width/comm\_size + 2, where the +2 accounts for the ghost cells on each side. The ghost exchange is done in two phases. In the first phase, each process receives from its left neighbor into its left ghost cell, then sends its last real column to its right neighbor (data propagates from left to right across all ranks). In the second phase, this direction is reversed. Corner cases are handled naturally by the rank checks for example rank 0 has no left neighbor so it only sends right, and the last rank has no right neighbor so it only sends left. The count is set to comm->height * DIRECTIONS since each column contains one cell per row, and each cell contains 9 directions doubles.
+
+
+\begin{lstlisting}
+
+   
+	//communication in increasing order of ranks to the right :
+	if(rank>0){
+		MPI_Recv(ghost_cell_left,count,MPI_DOUBLE,rank-1,0,comm->communicator,MPI_STATUS_IGNORE);
+	} 
+	if(rank< comm_size-1){
+		MPI_Send(real_cell_last,count,MPI_DOUBLE,rank+1,0,comm->communicator);
+	}
+	
+
+	//communication to the left : 
+
+	if(rank<comm_size-1){
+		MPI_Recv(ghost_cell_right,count,MPI_DOUBLE,rank+1,1,comm->communicator,MPI_STATUS_IGNORE);
+	} 
+	if(rank>0){
+		MPI_Send(real_cell_first,count,MPI_DOUBLE,rank-1,1,comm->communicator);
+	}
+
+
+\end{lstlisting}
+
+\subsection{Limitations}
+One limitation of this approach is that blocking communication forces processes to wait on each other, creating a dependency chain where rank 1 waits for rank 0, rank 2 waits for rank 1, and so on. This means communication is done sequentially across all processes, which limits performance (especially when having a large number of processes).
+
+
+\subsection{Performance analysis}
+
+
+\subsection{1D odd/even communication}
+The ghost exchange is done in two phases, one for each direction. In each phase, processes are split into two groups based on their rank, odd ranks send first then receive, while even ranks receive first then send. This avoids the dependency chain from exercise 1 where all processes were waiting on each other, since now half the processes are sending while the other half are receiving simultaneously. Corner cases are handled the same way as before,rank 0 has no left neighbor and the last rank has no right neighbor, so the corresponding send and receive calls are simply skipped.
+
+\begin{lstlisting}
+//communication to the left :
+	if (rank>0) {
+		if(rank%2!=0){
+			MPI_Send(real_cell_first,count,MPI_DOUBLE,rank-1,0,comm->communicator);
+			MPI_Recv(ghost_cell_left,count,MPI_DOUBLE,rank-1,0,comm->communicator,MPI_STATUS_IGNORE);
+		} 
+		else{
+			MPI_Recv(ghost_cell_left,count,MPI_DOUBLE,rank-1,0,comm->communicator,MPI_STATUS_IGNORE);
+			MPI_Send(real_cell_first,count,MPI_DOUBLE,rank-1,0,comm->communicator);
+		}
+	}
+	//communication to the right : 
+	if(rank<comm_size-1){
+		if(rank%2!=0){
+			MPI_Send(real_cell_last,count,MPI_DOUBLE,rank+1,0,comm->communicator);
+			MPI_Recv(ghost_cell_right,count,MPI_DOUBLE,rank+1,0,comm->communicator,MPI_STATUS_IGNORE);
+		} 
+		else{
+			MPI_Recv(ghost_cell_right,count,MPI_DOUBLE,rank+1,0,comm->communicator,MPI_STATUS_IGNORE);
+			MPI_Send(real_cell_last,count,MPI_DOUBLE,rank+1,0,comm->communicator);
+		}
+	}
+\end{lstlisting}
+
+\subsection{Limitations}
+One limitation of this approach is that even though the odd/even pattern avoids the dependency chain, it still uses blocking communication (with SEND/RECV) meaning that each process still has to fully wait for its communication to complete before moving on to the next computation step. This means there is still no overlap between communication and computation.
+
+\subsection{Performance analysis}
+
+
+
+\subsection{1D non-blocking communication}
+
+To make use of non-blocking communication, we modified the computation step. After applying special cells and collision, we start the ghost exchange with non-blocking calls, then immediately compute the interior cells,the ones that do not depend on ghost cell values. Then we wait for the ghost exchange to finish before computing the border cells that need the received values. This way, communication and computation overlap as much as possible.
+
+All sends and receives are posted at once, and the number of active requests is tracked in comm->req\_count. The key difference is that communication is split into two parts, a start function that posts all the requests, and a wait function that calls MPI\_Waitall. This allows the interior cells to be computed while the ghost exchange is still in progress, overlapping communication with computation and reducing the total execution time.
+\begin{lstlisting}
+    lbm_phys_special_cells(mesh, mesh_type, comm);
+
+    
+    lbm_phys_collision(temp_mesh, mesh);
+
+    
+    lbm_comm_ghost_exchange_ex3(comm, temp_mesh);  
+
+    //overlapping computation on the inner cell(non depending on ghost cells)
+    lbm_phys_propagation_inner(mesh, temp_mesh);
+
+    
+    lbm_comm_ghost_exchange_ex3_wait(comm);
+
+    
+    lbm_phys_propagation_border(mesh, temp_mesh);
+    
+\end{lstlisting}
+
+\begin{lstlisting}
+
+   //recv from the left into ghost cell
+	if (rank>0){
+		MPI_Irecv(ghost_cell_left,count,MPI_DOUBLE,rank-1,0,comm->communicator,&comm->requests[comm->req_count++]);
+	}
+	//recv from the right into ghost cell
+	if(rank<comm_size-1){
+		MPI_Irecv(ghost_cell_right,count,MPI_DOUBLE,rank+1,0,comm->communicator,&comm->requests[comm->req_count++]);
+	}
+
+	//send first real col to rank-1
+
+	if(rank>0){
+		MPI_Isend(real_cell_first,count,MPI_DOUBLE,rank-1,0,comm->communicator,&comm->requests[comm->req_count++]);
+	}
+	//send last real col to rank+1
+	if(rank<comm_size-1){
+		MPI_Isend(real_cell_last,count,MPI_DOUBLE,rank+1,0,comm->communicator,&comm->requests[comm->req_count++]);
+	}
+
+
+\end{lstlisting}
+
+\subsection{Limitations}
+One limitation of this approach is that the overlap between communication and computation can be observed if the interior computation takes long enough to hide the communication latency. For small  sizes, the communication finishes before the interior computation does, meaning the wait call returns immediately and the overlap brings no benefit.
+
+\subsection{Performance analysis}
+
+
+\section{Conclusion}
+
+In this report, we implemented three variants of 1D domain splitting for a parallel LBM fluid simulation using MPI. Each variant improved on the previous one,from a simple blocking approach that created a dependency chain between processes, to an odd/even pattern that allowed some parallelism in communication, and finally a non blocking version that overlapped communication with computation. 
+
+
+
+
+
+
+\end{document}
