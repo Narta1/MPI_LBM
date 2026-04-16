@@ -39,15 +39,10 @@ void lbm_comm_init_ex1(lbm_comm_t * comm, int total_width, int total_height)
 	comm->rank_x = rank;
 	comm->rank_y = 0;
 
-	// TODO : calculate the local sub-domain size (do not forget the 
-	//        ghost cells). Use total_width & total_height as starting 
-	//        point.
+	
 	comm->width = total_width/comm_size+2;
 	comm->height = total_height+2; // why + 2 here? We are propagating along the x axis.
 
-	// TODO : calculate the absolute position in the global mesh.
-	//        without accounting the ghost cells
-	//        (used to setup the obstable & initial conditions).
 	comm->x = rank*(total_width/comm_size);
 	comm->y = 0;
 
