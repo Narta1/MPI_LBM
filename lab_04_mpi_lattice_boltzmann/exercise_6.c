@@ -39,7 +39,6 @@ void lbm_comm_release_ex6(lbm_comm_t * comm)
 /****************************************************/
 void lbm_comm_ghost_exchange_ex6(lbm_comm_t * comm, lbm_mesh_t * mesh)
 {
-	//annoying fucking boundary calculations 
 	int rank_up = comm->rank_y == 0 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x, comm->rank_y - 1);
 
 	int rank_up_right = comm->rank_y == 0 || comm->rank_x == comm->nb_x - 1 ? MPI_PROC_NULL : MPI_Cart_rank_wrapper(comm, comm->rank_x + 1, comm->rank_y - 1);
