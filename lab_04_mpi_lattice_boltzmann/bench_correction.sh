@@ -16,7 +16,7 @@ function bench()
 		echo > /tmp/output.dat
 		for ex in 1 2 3 4 5 6
 		do
-			/usr/bin/time -f '%e' --append -o /tmp/output.dat mpirun --use-hwthread-cpus -np ${scale} ./lbm -n -e ${ex} -s ${scale} 
+			/usr/bin/time -f '%e' --append -o /tmp/output.dat mpirun --use-hwthread-cpus -np ${scale} ./lbm -n -e ${ex}
 		done
 		cat /tmp/output.dat | xargs echo ${scale} | tee -a scale.dat
 	done
